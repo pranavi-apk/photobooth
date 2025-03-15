@@ -321,7 +321,348 @@
         </div>
       </div>
     </div>
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="script.js"></script>
+    <script>
+      let localStream;
+      let peerConnection;
+      let roomId = null;
+      let isHost = false;
+      let isConnected = false;
+      let photos = [];
+      let currentPhotoIndex = 0;
+      let isCapturing = false;
+      let isMirrored = true;
+
+      // Initialize camera
+      async function initializeCamera() {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" },
+            audio: false,
+          });
+          document.getElementById("localVideo").srcObject = localStream;
+        } catch (err) {
+          console.error("Error accessing camera:", err);
+          alert(
+            "Error accessing camera. Please make sure you have granted camera permissions."
+          );
+        }
+      }
+
+      // Start camera when page loads
+      window.addEventListener("load", initializeCamera);
+
+      // Handle room creation/joining
+      function handleRoomAction(action) {
+        const input = document.getElementById("roomInput");
+        const roomId = input.value.trim();
+
+        if (!roomId) {
+          alert("Please enter a room ID");
+          return;
+        }
+
+        if (action === "create") {
+          isHost = true;
+          startSession(roomId);
+        } else if (action === "join") {
+          isHost = false;
+          startSession(roomId);
+        }
+      }
+
+      // Start a new session
+      function startSession(roomId) {
+        // Store room ID
+        window.roomId = roomId;
+
+        // Hide room input and show camera interface
+        document.getElementById("roomInput").style.display = "none";
+        document.getElementById("cameraInterface").style.display = "block";
+
+        // Update UI to show we're in a session
+        document.getElementById("status").textContent = `Room: ${roomId}`;
+        document.getElementById("status").style.color = "#4CAF50";
+
+        // Enable camera controls
+        document.getElementById("startCamera").disabled = true;
+        document.getElementById("stopCamera").disabled = false;
+        document.getElementById("captureBtn").disabled = false;
+
+        // Initialize camera if not already done
+        if (!localStream) {
+          initializeCamera();
+        }
+      }
+
+      // Stop camera
+      function stopCamera() {
+        if (localStream) {
+          localStream.getTracks().forEach((track) => track.stop());
+          document.getElementById("localVideo").srcObject = null;
+          localStream = null;
+          document.getElementById("startCamera").disabled = false;
+          document.getElementById("stopCamera").disabled = true;
+          document.getElementById("captureBtn").disabled = true;
+        }
+      }
+
+      // Toggle camera mirroring
+      function toggleMirror() {
+        const video = document.getElementById("localVideo");
+        isMirrored = !isMirrored;
+        video.style.transform = isMirrored ? "scaleX(-1)" : "scaleX(1)";
+      }
+
+      // Capture photo
+      function capturePhoto() {
+        if (isCapturing) return;
+        isCapturing = true;
+
+        const video = document.getElementById("localVideo");
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+
+        // Apply mirroring if enabled
+        if (isMirrored) {
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+        } else {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        }
+
+        // Apply current filter if any
+        const currentFilter = document.querySelector(".filter-option.selected");
+        if (currentFilter) {
+          ctx.filter = currentFilter.dataset.filter;
+        }
+
+        const photoData = canvas.toDataURL("image/png");
+        photos.push(photoData);
+        currentPhotoIndex++;
+
+        // Update preview
+        updatePreview();
+
+        // Check if we've captured all photos
+        if (currentPhotoIndex >= 4) {
+          document.getElementById("captureBtn").disabled = true;
+          document.getElementById("downloadBtn").disabled = false;
+          document.getElementById("downloadBtn").style.display = "block";
+        }
+
+        isCapturing = false;
+      }
+
+      // Update preview
+      function updatePreview() {
+        const previewContainer = document.getElementById("previewContainer");
+        previewContainer.innerHTML = "";
+
+        photos.forEach((photo, index) => {
+          const img = document.createElement("img");
+          img.src = photo;
+          img.className = "preview-photo";
+          img.draggable = true;
+          img.dataset.index = index;
+
+          img.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", index);
+          });
+
+          img.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const draggingIndex = parseInt(
+              e.dataTransfer.getData("text/plain")
+            );
+            const dropIndex = parseInt(e.target.dataset.index);
+            if (draggingIndex !== dropIndex) {
+              const temp = photos[draggingIndex];
+              photos[draggingIndex] = photos[dropIndex];
+              photos[dropIndex] = temp;
+              updatePreview();
+            }
+          });
+
+          previewContainer.appendChild(img);
+        });
+      }
+
+      // Download photo strip
+      function downloadStrip() {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const imageWidth = 300;
+        const imageHeight = 400;
+        const horizontalPadding = 40;
+        const topPadding = 40;
+        const bottomPadding = 120;
+        const photoPadding = 20;
+
+        canvas.width = imageWidth + horizontalPadding * 2;
+        canvas.height =
+          imageHeight * 4 + photoPadding * 3 + topPadding + bottomPadding;
+
+        // Fill background with selected color
+        const selectedColor = document.querySelector(".color-option.selected");
+        ctx.fillStyle = selectedColor ? selectedColor.dataset.color : "#FFFFFF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw photos
+        let y = topPadding;
+        photos.forEach((photo, index) => {
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, horizontalPadding, y, imageWidth, imageHeight);
+            y += imageHeight + photoPadding;
+
+            // If this is the last photo, add timestamp and message
+            if (index === photos.length - 1) {
+              // Draw timestamp
+              const now = new Date();
+              const dateStr = now.toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              });
+              ctx.font = "12px Alice";
+              ctx.fillStyle = "#000000";
+              ctx.textAlign = "right";
+              ctx.fillText(
+                dateStr,
+                canvas.width - horizontalPadding,
+                canvas.height - 20
+              );
+
+              // Draw copyright
+              ctx.font = "10px Alice";
+              ctx.fillStyle = "#000000";
+              ctx.textAlign = "right";
+              ctx.fillText(
+                "© 2024 PS: Wish You Were Here",
+                canvas.width - horizontalPadding,
+                canvas.height - 40
+              );
+
+              // Draw PS message
+              const userMessage = document
+                .getElementById("messageInput")
+                .value.trim();
+              if (userMessage) {
+                // Center align both "PS:" and the message
+                ctx.textAlign = "center";
+
+                // Draw "PS:" slightly above the message
+                ctx.font = "bold 28px Playfair Display";
+                ctx.fillText("PS:", canvas.width / 2, canvas.height - 120);
+
+                // Draw the message with a larger font
+                ctx.font = "26px Alice";
+                ctx.fillText(userMessage, canvas.width / 2, canvas.height - 80);
+              }
+            }
+          };
+          img.src = photo;
+        });
+
+        // Download the strip
+        const link = document.createElement("a");
+        link.download = "photo-strip.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }
+
+      // Reset photos
+      function resetPhotos() {
+        photos = [];
+        currentPhotoIndex = 0;
+        document.getElementById("captureBtn").disabled = false;
+        document.getElementById("downloadBtn").disabled = true;
+        document.getElementById("downloadBtn").style.display = "none";
+        updatePreview();
+      }
+
+      // Handle filter selection
+      function selectFilter(filter) {
+        const video = document.getElementById("localVideo");
+        const filterOptions = document.querySelectorAll(".filter-option");
+        filterOptions.forEach((option) => option.classList.remove("selected"));
+        filter.classList.add("selected");
+        video.style.filter = filter.dataset.filter;
+      }
+
+      // Handle color selection
+      function selectColor(color) {
+        const colorOptions = document.querySelectorAll(".color-option");
+        colorOptions.forEach((option) => option.classList.remove("selected"));
+        color.classList.add("selected");
+      }
+
+      // Initialize color options
+      function initializeColorOptions() {
+        const colors = [
+          "#FFFFFF", // White
+          "#FFF5E6", // Cream
+          "#FFE4E1", // Pastel Pink
+          "#B0E0E6", // Baby Blue
+          "#98FF98", // Mint Green
+          "#E6E6FA", // Lavender
+          "#FFDAB9", // Peach
+          "#FFFACD", // Lemon Chiffon
+          "#FFF68F", // Pastel Yellow
+          "#B0E0E6", // Powder Blue
+          "#FFE4E1", // Misty Rose
+          "#E6E6FA", // Pale Violet
+        ];
+
+        const colorOptions = document.getElementById("colorOptions");
+        colors.forEach((color) => {
+          const div = document.createElement("div");
+          div.className = "color-option";
+          div.style.backgroundColor = color;
+          div.dataset.color = color;
+          div.onclick = () => selectColor(div);
+          colorOptions.appendChild(div);
+        });
+      }
+
+      // Initialize filter options
+      function initializeFilterOptions() {
+        const filters = [
+          { name: "Normal", filter: "none" },
+          { name: "Black & White", filter: "grayscale(100%)" },
+          { name: "Sepia", filter: "sepia(100%)" },
+          { name: "High Contrast", filter: "contrast(150%)" },
+          { name: "Bright", filter: "brightness(150%)" },
+          { name: "Soft Focus", filter: "blur(1px) brightness(110%)" },
+          {
+            name: "Film Noir",
+            filter: "grayscale(100%) contrast(150%) brightness(80%)",
+          },
+          { name: "Vivid", filter: "saturate(200%)" },
+        ];
+
+        const filterOptions = document.getElementById("filterOptions");
+        filters.forEach((filter) => {
+          const div = document.createElement("div");
+          div.className = "filter-option";
+          div.textContent = filter.name;
+          div.dataset.filter = filter.filter;
+          div.onclick = () => selectFilter(div);
+          filterOptions.appendChild(div);
+        });
+      }
+
+      // Initialize everything when the page loads
+      window.addEventListener("load", () => {
+        initializeCamera();
+        initializeColorOptions();
+        initializeFilterOptions();
+      });
+    </script>
   </body>
 </html>
