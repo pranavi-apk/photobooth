@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PS: Wish You Were Here - Photo Editor</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Alice&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-pink: #e8b4b8;
+        --secondary-pink: #eed6d3;
+        --light-pink: #f4e1dd;
+        --dark-pink: #d4a5a5;
+        --vintage-brown: #3e2723;
+        --cream: #fdf6e3;
+      }
+
+      body {
+        font-family: "Alice", serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-color: var(--cream);
+        background-image: radial-gradient(
+            var(--secondary-pink) 15%,
+            transparent 16%
+          ),
+          radial-gradient(var(--secondary-pink) 15%, transparent 16%);
+        background-size: 60px 60px;
+        background-position: 0 0, 30px 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        max-width: 1200px;
+        width: 90%;
+        text-align: center;
+        background: var(--cream);
+        padding: 40px;
+        position: relative;
+        border: 2px solid var(--dark-pink);
+      }
+
+      /* Vintage Border */
+      .container:before {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        border: 2px solid var(--dark-pink);
+        pointer-events: none;
+      }
+
+      /* Corner Decorations */
+      .container:after {
+        content: "❦";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--cream);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 24px;
+      }
+
+      h1 {
+        font-family: "Playfair Display", serif;
+        color: var(--vintage-brown);
+        margin: 20px 0 40px;
+        font-size: 3em;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        position: relative;
+        padding-bottom: 20px;
+      }
+
+      h1:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 3px;
+        background: var(--dark-pink);
+      }
+
+      .photo-strip {
+        width: 960px;
+        margin: 30px auto;
+        background: var(--light-pink);
+        padding: 20px;
+        border: 2px solid var(--dark-pink);
+        position: relative;
+      }
+
+      .photo-strip:before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        border: 1px solid var(--dark-pink);
+        pointer-events: none;
+      }
+
+      .photo-slot {
+        width: 100%;
+        aspect-ratio: 2.67;
+        border: 2px dashed var(--dark-pink);
+        background: var(--cream);
+        margin: 20px 0;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        cursor: move;
+        transition: all 0.3s ease;
+      }
+
+      .photo-slot:hover {
+        border-style: solid;
+      }
+
+      button {
+        padding: 12px 25px;
+        font-size: 16px;
+        border: 2px solid var(--dark-pink);
+        background: var(--cream);
+        color: var(--vintage-brown);
+        font-family: "Alice", serif;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin: 10px;
+      }
+
+      button:hover {
+        background: var(--dark-pink);
+        color: var(--cream);
+      }
+
+      .color-options {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        position: relative;
+      }
+
+      .color-options:before {
+        content: "✿";
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--light-pink);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 20px;
+      }
+
+      .color-option {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid var(--dark-pink);
+        transition: transform 0.2s ease;
+      }
+
+      .color-option:hover {
+        transform: scale(1.1);
+      }
+
+      .color-option.selected {
+        border: 2px solid var(--vintage-brown);
+        transform: scale(1.1);
+      }
+
+      .section-title {
+        font-family: "Playfair Display", serif;
+        color: var(--vintage-brown);
+        margin: 30px 0 10px;
+        font-size: 1.5em;
+        text-align: center;
+      }
+
+      .filter-options {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px auto;
+        flex-wrap: wrap;
+        max-width: 600px;
+        padding: 20px;
+        background: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        position: relative;
+      }
+
+      .filter-options:before {
+        content: "✧";
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--light-pink);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 20px;
+      }
+
+      .filter-option {
+        padding: 8px 15px;
+        cursor: pointer;
+        background: var(--cream);
+        border: 2px solid var(--dark-pink);
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-family: "Alice", serif;
+        color: var(--vintage-brown);
+      }
+
+      .filter-option:hover {
+        background: var(--dark-pink);
+        color: var(--cream);
+      }
+
+      .filter-option.selected {
+        background: var(--dark-pink);
+        color: var(--cream);
+      }
+
+      .message-input-container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        position: relative;
+      }
+
+      .message-input-container:before {
+        content: "♡";
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--light-pink);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 20px;
+      }
+
+      .message-input {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+        border: 2px solid var(--dark-pink);
+        background: var(--cream);
+        font-family: "Alice", serif;
+        color: var(--vintage-brown);
+      }
+
+      .message-input:focus {
+        outline: none;
+        border-color: var(--vintage-brown);
+        box-shadow: 0 0 10px rgba(212, 165, 165, 0.3);
+      }
+
+      .char-count {
+        margin-top: 10px;
+        font-size: 14px;
+        color: var(--vintage-brown);
+        font-family: "Alice", serif;
+      }
+
+      /* Decorative elements */
+      .corner {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--dark-pink);
+      }
+
+      .corner-tl {
+        top: 5px;
+        left: 5px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .corner-tr {
+        top: 5px;
+        right: 5px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .corner-bl {
+        bottom: 5px;
+        left: 5px;
+        border-right: none;
+        border-top: none;
+      }
+      .corner-br {
+        bottom: 5px;
+        right: 5px;
+        border-left: none;
+        border-top: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <h1>Photo Strip Editor</h1>
+      <h3 class="section-title">Add Your Message</h3>
+      <div class="message-input-container">
+        <input
+          type="text"
+          id="messageInput"
+          class="message-input"
+          placeholder="PS: Write your little note to describe this moment..."
+          oninput="checkMessageLength(this)"
+        />
+        <div class="char-count" id="wordCount">0/15 words</div>
+      </div>
+      <h3 class="section-title">Strip Background Color</h3>
+      <div class="color-options" id="colorOptions">
+        <!-- Colors will be added by JavaScript -->
+      </div>
+      <h3 class="section-title">Photo Filters</h3>
+      <div class="filter-options" id="filterOptions">
+        <!-- Filters will be added by JavaScript -->
+      </div>
+      <div class="photo-strip" id="photoStrip">
+        <div class="photo-slot" draggable="true"></div>
+        <div class="photo-slot" draggable="true"></div>
+        <div class="photo-slot" draggable="true"></div>
+        <div class="photo-slot" draggable="true"></div>
+      </div>
+      <p>
+        Rearrange your photos the way you like or let us do it for you. Change
+        the colors, add a filter, write a message and make it feel personal to
+        you. No matter how it turns out, it’s yours. So keep it, because every
+        memory matters.
+      </p>
+      <button onclick="rearrangeStrip()">✨ Rearrange Photos</button>
+      <button class="download-strip" onclick="downloadStrip()">
+        💝 Download Strip
+      </button>
+    </div>
+    <script>
+      // Color options
+      const colors = [
+        { name: "White", value: "#FFFFFF" },
+        { name: "Cream", value: "#FFFDD0" },
+        { name: "Pastel Pink", value: "#FFE4E1" },
+        { name: "Baby Blue", value: "#E0FFFF" },
+        { name: "Mint Green", value: "#E0FFE0" },
+        { name: "Lavender", value: "#E6E6FA" },
+        { name: "Peach", value: "#FFDAB9" },
+        { name: "Lemon Chiffon", value: "#FFFACD" },
+        { name: "Pastel Yellow", value: "#FFFFE0" },
+        { name: "Powder Blue", value: "#B0E0E6" },
+        { name: "Pale Violet", value: "#D8BFD8" },
+      ];
+
+      // Initialize color options
+      const colorOptions = document.getElementById("colorOptions");
+      let currentStripColor = "#FFFFFF";
+
+      colors.forEach((color) => {
+        const colorButton = document.createElement("div");
+        colorButton.className = "color-option";
+        colorButton.style.backgroundColor = color.value;
+        colorButton.title = color.name;
+        if (color.value === currentStripColor) {
+          colorButton.classList.add("selected");
+        }
+        colorButton.addEventListener("click", () => {
+          document
+            .querySelectorAll(".color-option")
+            .forEach((btn) => btn.classList.remove("selected"));
+          colorButton.classList.add("selected");
+          currentStripColor = color.value;
+          document.getElementById("photoStrip").style.backgroundColor =
+            color.value;
+        });
+        colorOptions.appendChild(colorButton);
+      });
+
+      // Filter options
+      const filters = [
+        { name: "None", value: "none" },
+        { name: "Black & White", value: "grayscale(100%)" },
+        { name: "Sepia", value: "sepia(100%)" },
+        { name: "High Contrast", value: "contrast(150%)" },
+        { name: "Brightness", value: "brightness(120%)" },
+        { name: "Vintage", value: "sepia(50%) contrast(110%)" },
+        { name: "Soft", value: "brightness(110%) contrast(90%) saturate(85%)" },
+        {
+          name: "Noir",
+          value: "grayscale(100%) contrast(120%) brightness(90%)",
+        },
+        {
+          name: "Vivid",
+          value: "contrast(110%) saturate(150%) brightness(105%)",
+        },
+      ];
+
+      let currentFilter = "none";
+      const filterOptions = document.getElementById("filterOptions");
+
+      filters.forEach((filter) => {
+        const filterButton = document.createElement("div");
+        filterButton.className = "filter-option";
+        filterButton.textContent = filter.name;
+        if (filter.value === currentFilter) {
+          filterButton.classList.add("selected");
+        }
+        filterButton.addEventListener("click", () => {
+          document
+            .querySelectorAll(".filter-option")
+            .forEach((btn) => btn.classList.remove("selected"));
+          filterButton.classList.add("selected");
+          currentFilter = filter.value;
+
+          // Apply filter to all photos in the strip
+          document.querySelectorAll(".photo-slot").forEach((slot) => {
+            slot.style.filter = currentFilter;
+          });
+        });
+        filterOptions.appendChild(filterButton);
+      });
+
+      // Get photos from localStorage if they exist
+      window.onload = function () {
+        const photos = JSON.parse(
+          localStorage.getItem("photoboothPhotos") || "[]"
+        );
+        const slots = document.querySelectorAll(".photo-slot");
+        photos.forEach((photo, index) => {
+          if (index < slots.length) {
+            slots[index].style.backgroundImage = `url(${photo})`;
+          }
+        });
+      };
+
+      // Enable drag and drop functionality
+      const photoStrip = document.getElementById("photoStrip");
+      let draggedItem = null;
+
+      document.querySelectorAll(".photo-slot").forEach((slot) => {
+        slot.addEventListener("dragstart", function (e) {
+          draggedItem = this;
+          setTimeout(() => (this.style.opacity = "0.5"), 0);
+        });
+
+        slot.addEventListener("dragend", function () {
+          draggedItem = null;
+          this.style.opacity = "1";
+        });
+
+        slot.addEventListener("dragover", function (e) {
+          e.preventDefault();
+        });
+
+        slot.addEventListener("drop", function (e) {
+          e.preventDefault();
+          if (draggedItem) {
+            const tempBackground = this.style.backgroundImage;
+            this.style.backgroundImage = draggedItem.style.backgroundImage;
+            draggedItem.style.backgroundImage = tempBackground;
+          }
+        });
+      });
+
+      function rearrangeStrip() {
+        const slots = Array.from(document.querySelectorAll(".photo-slot"));
+        const backgrounds = slots.map((slot) => slot.style.backgroundImage);
+        backgrounds.push(backgrounds.shift()); // Rotate photos
+        slots.forEach((slot, index) => {
+          slot.style.backgroundImage = backgrounds[index];
+        });
+      }
+
+      function checkMessageLength(input) {
+        const words = input.value.trim().split(/\s+/);
+        const wordCount = input.value.trim() === "" ? 0 : words.length;
+        document.getElementById(
+          "wordCount"
+        ).textContent = `${wordCount}/15 words`;
+
+        if (wordCount > 15) {
+          const truncatedWords = words.slice(0, 15);
+          input.value = truncatedWords.join(" ");
+        }
+      }
+
+      function downloadStrip() {
+        const strip = document.getElementById("photoStrip");
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas dimensions to match the original captured photo dimensions
+        const imageWidth = 960; // Original image width
+        const horizontalPadding = 40; // Padding on left and right sides
+        canvas.width = imageWidth + horizontalPadding * 2; // Add padding to both sides
+        const slotHeight = 360;
+        const topPadding = 40; // Padding above first photo
+        const bottomPadding = 250; // Triple padding below last photo
+        const photoPadding = 20; // Padding between photos
+        canvas.height =
+          slotHeight * 4 + photoPadding * 3 + topPadding + bottomPadding;
+
+        // Fill with selected background color
+        ctx.fillStyle = currentStripColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Create temporary image elements for each photo slot
+        const promises = Array.from(
+          document.querySelectorAll(".photo-slot")
+        ).map((slot, index) => {
+          return new Promise((resolve) => {
+            if (slot.style.backgroundImage) {
+              const img = new Image();
+              img.crossOrigin = "anonymous";
+              img.onload = () => {
+                // Create a temporary canvas to apply the filter
+                const tempCanvas = document.createElement("canvas");
+                tempCanvas.width = imageWidth;
+                tempCanvas.height = slotHeight;
+                const tempCtx = tempCanvas.getContext("2d");
+
+                // Draw the image on the temporary canvas
+                tempCtx.drawImage(img, 0, 0, imageWidth, slotHeight);
+
+                // Apply the current filter
+                if (currentFilter !== "none") {
+                  tempCtx.filter = currentFilter;
+                  tempCtx.drawImage(tempCanvas, 0, 0);
+                  tempCtx.filter = "none";
+                }
+
+                // Calculate position with both vertical and horizontal padding
+                const x = horizontalPadding;
+                const y = topPadding + index * (slotHeight + photoPadding);
+
+                // Draw the filtered image onto the main canvas
+                ctx.drawImage(tempCanvas, x, y);
+
+                // Add timestamp, copyright, and PS message in the bottom padding area after the last photo
+                if (index === 3) {
+                  const now = new Date();
+                  const formattedDate = now.toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  });
+                  const formattedTime = now.toLocaleTimeString(undefined, {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  });
+
+                  // Draw timestamp and copyright
+                  ctx.font = "20px Playfair Display";
+                  ctx.fillStyle = "#000000";
+                  ctx.textAlign = "right";
+                  const timestampText = `${formattedDate} ${formattedTime} © 2025`;
+                  const bottomY = canvas.height - 20;
+                  ctx.fillText(
+                    timestampText,
+                    canvas.width - horizontalPadding - 10,
+                    bottomY
+                  );
+
+                  // Draw PS message
+                  const userMessage = document
+                    .getElementById("messageInput")
+                    .value.trim();
+                  if (userMessage) {
+                    // Center align both "PS:" and the message
+                    ctx.textAlign = "center";
+
+                    // Draw "PS:" slightly above the message
+                    ctx.font = "bold 28px 'Playfair Display'";
+                    ctx.fillText("PS:", canvas.width / 2, canvas.height - 120);
+
+                    // Draw the message with larger font
+                    ctx.font = "26px 'Alice'";
+                    ctx.fillText(
+                      userMessage,
+                      canvas.width / 2,
+                      canvas.height - 80
+                    );
+                  }
+                }
+                resolve();
+              };
+              img.src = slot.style.backgroundImage.replace(
+                /url\(['"](.+)['"]\)/,
+                "$1"
+              );
+            } else {
+              resolve();
+            }
+          });
+        });
+
+        // When all images are drawn, download the canvas
+        Promise.all(promises).then(() => {
+          const link = document.createElement("a");
+          link.download = "photo-strip.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        });
+      }
+    </script>
+  </body>
+</html>

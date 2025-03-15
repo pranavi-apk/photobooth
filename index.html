@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PS: Wish You Were Here</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Alice&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-pink: #e8b4b8;
+        --secondary-pink: #eed6d3;
+        --light-pink: #f4e1dd;
+        --dark-pink: #d4a5a5;
+        --vintage-brown: #3e2723;
+        --cream: #fdf6e3;
+      }
+
+      body {
+        font-family: "Alice", serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-color: var(--cream);
+        background-image: radial-gradient(
+            var(--secondary-pink) 15%,
+            transparent 16%
+          ),
+          radial-gradient(var(--secondary-pink) 15%, transparent 16%);
+        background-size: 60px 60px;
+        background-position: 0 0, 30px 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        max-width: 1200px;
+        width: 90%;
+        text-align: center;
+        background: var(--cream);
+        padding: 40px;
+        position: relative;
+        border: 2px solid var(--dark-pink);
+      }
+
+      /* Vintage Border */
+      .container:before {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        border: 2px solid var(--dark-pink);
+        pointer-events: none;
+      }
+
+      /* Corner Decorations */
+      .container:after {
+        content: "❦";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--cream);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 24px;
+      }
+
+      h1 {
+        font-family: "Playfair Display", serif;
+        color: var(--vintage-brown);
+        margin: 20px 0 40px;
+        font-size: 3em;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        position: relative;
+        padding-bottom: 20px;
+      }
+
+      h1:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 3px;
+        background: var(--dark-pink);
+      }
+
+      #roomSetup {
+        margin: 40px auto;
+        max-width: 500px;
+        padding: 30px;
+        background: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        position: relative;
+      }
+
+      #roomSetup:before {
+        content: "✿";
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--light-pink);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 20px;
+      }
+
+      input {
+        width: 80%;
+        padding: 15px;
+        margin: 10px 0;
+        font-size: 16px;
+        border: 2px solid var(--dark-pink);
+        background: var(--cream);
+        font-family: "Alice", serif;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--vintage-brown);
+        box-shadow: 0 0 10px rgba(212, 165, 165, 0.3);
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      button {
+        padding: 12px 25px;
+        font-size: 16px;
+        border: 2px solid var(--dark-pink);
+        background: var(--cream);
+        color: var(--vintage-brown);
+        font-family: "Alice", serif;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--dark-pink);
+        color: var(--cream);
+      }
+
+      button:disabled {
+        background-color: #ccc;
+        border-color: #999;
+        color: #666;
+        cursor: not-allowed;
+      }
+
+      .video-wrapper {
+        background-color: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        padding: 20px;
+        position: relative;
+        margin: 20px auto;
+        max-width: fit-content;
+        display: flex;
+        gap: 0;
+      }
+
+      .video-wrapper:before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        border: 1px solid var(--dark-pink);
+        pointer-events: none;
+      }
+
+      .video-wrapper > div {
+        display: flex;
+        flex-direction: column;
+      }
+
+      video {
+        background-color: var(--cream);
+        width: 480px;
+        height: 360px;
+        border: none;
+        display: block;
+      }
+
+      #localVideo {
+        transform: scaleX(-1);
+      }
+
+      .video-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      h2,
+      h3 {
+        font-family: "Playfair Display", serif;
+        color: var(--vintage-brown);
+      }
+
+      .photo-counter {
+        margin: 20px 0;
+        font-size: 18px;
+        color: var(--vintage-brown);
+        font-family: "Playfair Display", serif;
+      }
+
+      #captureBtn {
+        background: var(--dark-pink);
+        color: var(--cream);
+        margin-top: 20px;
+        font-size: 18px;
+        padding: 15px 30px;
+      }
+
+      #preview {
+        max-width: 960px;
+        border: 2px solid var(--dark-pink);
+        padding: 10px;
+        background: var(--cream);
+        display: none;
+      }
+
+      #downloadBtn {
+        margin-top: 20px;
+        display: none;
+      }
+
+      /* Decorative elements */
+      .corner {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--dark-pink);
+      }
+
+      .corner-tl {
+        top: 5px;
+        left: 5px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .corner-tr {
+        top: 5px;
+        right: 5px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .corner-bl {
+        bottom: 5px;
+        left: 5px;
+        border-right: none;
+        border-top: none;
+      }
+      .corner-br {
+        bottom: 5px;
+        right: 5px;
+        border-left: none;
+        border-top: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <h1>PS: Wish You Were Here</h1>
+      <div id="status"></div>
+      <div id="roomSetup">
+        <input
+          type="text"
+          id="roomId"
+          placeholder="Enter a unique room name..."
+        />
+        <div class="btn-group">
+          <button id="createRoomBtn">Create Room</button>
+          <button id="joinRoomBtn">Join Room</button>
+        </div>
+      </div>
+      <div id="room" style="display: none">
+        <h2>Room: <span id="roomName"></span></h2>
+        <div class="video-container">
+          <div class="video-wrapper">
+            <div>
+              <h3>Close</h3>
+              <video id="localVideo" autoplay muted playsinline></video>
+            </div>
+            <div>
+              <h3>Closer</h3>
+              <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+          </div>
+        </div>
+        <div class="photo-counter">
+          Photos: <span id="photoCount">0</span>/4
+        </div>
+        <button id="captureBtn" disabled>📸 Take Photo (0/4)</button>
+        <div class="preview-container">
+          <canvas id="canvas"></canvas>
+          <img id="preview" alt="Captured photo" />
+          <br />
+          <button id="downloadBtn">⬇️ Download Photo</button>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
