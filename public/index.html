@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PS: Wish You Were Here</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Alice&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-pink: #e8b4b8;
+        --secondary-pink: #eed6d3;
+        --light-pink: #f4e1dd;
+        --dark-pink: #d4a5a5;
+        --vintage-brown: #3e2723;
+        --cream: #fdf6e3;
+      }
+
+      body {
+        font-family: "Alice", serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-color: var(--cream);
+        background-image: radial-gradient(
+            var(--secondary-pink) 15%,
+            transparent 16%
+          ),
+          radial-gradient(var(--secondary-pink) 15%, transparent 16%);
+        background-size: 60px 60px;
+        background-position: 0 0, 30px 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        max-width: 1200px;
+        width: 90%;
+        text-align: center;
+        background: var(--cream);
+        padding: 40px;
+        position: relative;
+        border: 2px solid var(--dark-pink);
+      }
+
+      /* Vintage Border */
+      .container:before {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        border: 2px solid var(--dark-pink);
+        pointer-events: none;
+      }
+
+      /* Corner Decorations */
+      .container:after {
+        content: "❦";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--cream);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 24px;
+      }
+
+      h1 {
+        font-family: "Playfair Display", serif;
+        color: var(--vintage-brown);
+        margin: 20px 0 40px;
+        font-size: 3em;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        position: relative;
+        padding-bottom: 20px;
+      }
+
+      h1:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 3px;
+        background: var(--dark-pink);
+      }
+
+      #roomSetup {
+        margin: 40px auto;
+        max-width: 500px;
+        padding: 30px;
+        background: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        position: relative;
+      }
+
+      #roomSetup:before {
+        content: "✿";
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--light-pink);
+        padding: 0 20px;
+        color: var(--dark-pink);
+        font-size: 20px;
+      }
+
+      input {
+        width: 80%;
+        padding: 15px;
+        margin: 10px 0;
+        font-size: 16px;
+        border: 2px solid var(--dark-pink);
+        background: var(--cream);
+        font-family: "Alice", serif;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--vintage-brown);
+        box-shadow: 0 0 10px rgba(212, 165, 165, 0.3);
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      button {
+        padding: 12px 25px;
+        font-size: 16px;
+        border: 2px solid var(--dark-pink);
+        background: var(--cream);
+        color: var(--vintage-brown);
+        font-family: "Alice", serif;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--dark-pink);
+        color: var(--cream);
+      }
+
+      button:disabled {
+        background-color: #ccc;
+        border-color: #999;
+        color: #666;
+        cursor: not-allowed;
+      }
+
+      .video-wrapper {
+        background-color: var(--light-pink);
+        border: 2px solid var(--dark-pink);
+        padding: 20px;
+        position: relative;
+        margin: 20px auto;
+        max-width: fit-content;
+        display: flex;
+        gap: 0;
+      }
+
+      .video-wrapper:before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        border: 1px solid var(--dark-pink);
+        pointer-events: none;
+      }
+
+      .video-wrapper > div {
+        display: flex;
+        flex-direction: column;
+      }
+
+      video {
+        background-color: var(--cream);
+        width: 480px;
+        height: 360px;
+        border: none;
+        display: block;
+        object-fit: cover;
+      }
+
+      #localVideo {
+        transform: scaleX(-1);
+      }
+
+      #remoteVideo {
+        transform: scaleX(1);
+      }
+
+      .video-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      h2,
+      h3 {
+        font-family: "Playfair Display", serif;
+        color: var(--vintage-brown);
+      }
+
+      .photo-counter {
+        margin: 20px 0;
+        font-size: 18px;
+        color: var(--vintage-brown);
+        font-family: "Playfair Display", serif;
+      }
+
+      #captureBtn {
+        background: var(--dark-pink);
+        color: var(--cream);
+        margin-top: 20px;
+        font-size: 18px;
+        padding: 15px 30px;
+      }
+
+      #preview {
+        max-width: 960px;
+        border: 2px solid var(--dark-pink);
+        padding: 10px;
+        background: var(--cream);
+        display: none;
+      }
+
+      #downloadBtn {
+        margin-top: 20px;
+        display: none;
+      }
+
+      /* Decorative elements */
+      .corner {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--dark-pink);
+      }
+
+      .corner-tl {
+        top: 5px;
+        left: 5px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .corner-tr {
+        top: 5px;
+        right: 5px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .corner-bl {
+        bottom: 5px;
+        left: 5px;
+        border-right: none;
+        border-top: none;
+      }
+      .corner-br {
+        bottom: 5px;
+        right: 5px;
+        border-left: none;
+        border-top: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <h1>PS: Wish You Were Here</h1>
+      <div id="status"></div>
+      <div id="roomSetup">
+        <input
+          type="text"
+          id="roomId"
+          placeholder="Enter a unique room name..."
+        />
+        <div class="btn-group">
+          <button id="createRoomBtn">Create Room</button>
+          <button id="joinRoomBtn">Join Room</button>
+        </div>
+      </div>
+      <div id="room" style="display: none">
+        <h2>Room: <span id="roomName"></span></h2>
+        <div class="video-container">
+          <div class="video-wrapper">
+            <div>
+              <h3>Close</h3>
+              <video id="localVideo" autoplay muted playsinline></video>
+            </div>
+            <div>
+              <h3>Closer</h3>
+              <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+          </div>
+        </div>
+        <div class="photo-counter">
+          Photos: <span id="photoCount">0</span>/4
+        </div>
+        <button id="captureBtn" disabled>📸 Take Photo (0/4)</button>
+        <div class="preview-container">
+          <canvas id="canvas"></canvas>
+          <img id="preview" alt="Captured photo" />
+          <br />
+          <button id="downloadBtn">⬇️ Download Photo</button>
+        </div>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // WebRTC configuration
+      const configuration = {
+        iceServers: [
+          {
+            urls: [
+              "stun:stun1.l.google.com:19302",
+              "stun:stun2.l.google.com:19302",
+              "stun:stun3.l.google.com:19302",
+            ],
+          },
+          {
+            urls: "turn:openrelay.metered.ca:80",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+          {
+            urls: "turn:openrelay.metered.ca:443?transport=tcp",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+        ],
+      };
+
+      // Initialize socket connection with debug logging
+      const socket = io();
+
+      socket.on("connect", () => {
+        console.log("Socket connected successfully");
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+      });
+
+      // Room setup
+      const roomIdInput = document.getElementById("roomId");
+      const createRoomBtn = document.getElementById("createRoomBtn");
+      const joinRoomBtn = document.getElementById("joinRoomBtn");
+      const roomSetup = document.getElementById("roomSetup");
+      const videoContainer = document.getElementById("videoContainer");
+      const captureBtn = document.getElementById("captureBtn");
+      const preview = document.getElementById("preview");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const photoCounter = document.getElementById("photoCount");
+      let localStream;
+      let roomId;
+      let photos = [];
+      let peerConnection;
+
+      // Create room
+      createRoomBtn.addEventListener("click", async () => {
+        roomId = roomIdInput.value.trim();
+        if (!roomId) {
+          alert("Please enter a room ID");
+          return;
+        }
+        console.log("Creating room:", roomId);
+        try {
+          await initializeWebRTC();
+          socket.emit("join-room", roomId);
+          console.log("Joined room:", roomId);
+          roomSetup.style.display = "none";
+          document.getElementById("room").style.display = "block";
+          document.getElementById("roomName").textContent = roomId;
+          captureBtn.disabled = false;
+        } catch (error) {
+          console.error("Error creating room:", error);
+          alert("Error creating room. Please try again.");
+        }
+      });
+
+      // Join room
+      joinRoomBtn.addEventListener("click", async () => {
+        roomId = roomIdInput.value.trim();
+        if (!roomId) {
+          alert("Please enter a room ID");
+          return;
+        }
+        console.log("Joining room:", roomId);
+        try {
+          await initializeWebRTC();
+          socket.emit("join-room", roomId);
+          console.log("Joined room:", roomId);
+          roomSetup.style.display = "none";
+          document.getElementById("room").style.display = "block";
+          document.getElementById("roomName").textContent = roomId;
+          captureBtn.disabled = false;
+        } catch (error) {
+          console.error("Error joining room:", error);
+          alert("Error joining room. Please try again.");
+        }
+      });
+
+      // Initialize WebRTC
+      async function initializeWebRTC() {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+          const localVideo = document.getElementById("localVideo");
+          localVideo.srcObject = localStream;
+          await localVideo.play();
+        } catch (err) {
+          console.error("Error accessing camera:", err);
+          alert(
+            "Error accessing camera. Please make sure you have granted camera permissions."
+          );
+          throw err; // Re-throw to handle in the calling function
+        }
+      }
+
+      // Handle user connection
+      socket.on("user-connected", async (userId) => {
+        console.log("User connected:", userId);
+        try {
+          createPeerConnection();
+        } catch (error) {
+          console.error("Error creating peer connection:", error);
+          alert(
+            "Error establishing connection with other user. Please try again."
+          );
+        }
+      });
+
+      // Create peer connection
+      function createPeerConnection() {
+        try {
+          peerConnection = new RTCPeerConnection(configuration);
+          const remoteVideo = document.getElementById("remoteVideo");
+          remoteVideo.srcObject = new MediaStream();
+
+          // Add local stream tracks to peer connection
+          localStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, localStream);
+          });
+
+          // Handle incoming tracks
+          peerConnection.ontrack = (event) => {
+            console.log("Received remote track:", event.track.kind);
+            if (event.track.kind === "video") {
+              remoteVideo.srcObject.addTrack(event.track);
+              remoteVideo.play().catch((error) => {
+                console.error("Error playing remote video:", error);
+              });
+            }
+          };
+
+          // Handle ICE connection state changes
+          peerConnection.oniceconnectionstatechange = () => {
+            console.log(
+              "ICE connection state:",
+              peerConnection.iceConnectionState
+            );
+          };
+
+          // Handle ICE candidates
+          peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+              console.log("Sending ICE candidate");
+              socket.emit("ice-candidate", event.candidate, roomId);
+            }
+          };
+
+          // Create and send offer
+          peerConnection
+            .createOffer()
+            .then((offer) => {
+              console.log("Created offer:", offer.type);
+              return peerConnection.setLocalDescription(offer);
+            })
+            .then(() => {
+              console.log("Sending offer to peer");
+              socket.emit("offer", peerConnection.localDescription, roomId);
+            })
+            .catch((error) => {
+              console.error("Error creating offer:", error);
+              throw error;
+            });
+        } catch (error) {
+          console.error("Error in createPeerConnection:", error);
+          throw error;
+        }
+      }
+
+      // Handle incoming offer
+      socket.on("offer", async (offer) => {
+        console.log("Received offer");
+        try {
+          if (!peerConnection) {
+            createPeerConnection();
+          }
+          await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(offer)
+          );
+          const answer = await peerConnection.createAnswer();
+          console.log("Created answer");
+          await peerConnection.setLocalDescription(answer);
+          socket.emit("answer", answer, roomId);
+        } catch (error) {
+          console.error("Error handling offer:", error);
+          alert("Error establishing connection. Please try again.");
+        }
+      });
+
+      // Handle incoming answer
+      socket.on("answer", async (answer) => {
+        console.log("Received answer");
+        try {
+          if (peerConnection) {
+            await peerConnection.setRemoteDescription(
+              new RTCSessionDescription(answer)
+            );
+          }
+        } catch (error) {
+          console.error("Error handling answer:", error);
+          alert("Error establishing connection. Please try again.");
+        }
+      });
+
+      // Handle ICE candidates
+      socket.on("ice-candidate", async (candidate) => {
+        console.log("Received ICE candidate");
+        try {
+          if (peerConnection) {
+            await peerConnection.addIceCandidate(
+              new RTCIceCandidate(candidate)
+            );
+          }
+        } catch (error) {
+          console.error("Error handling ICE candidate:", error);
+        }
+      });
+
+      // Handle photo capture
+      captureBtn.addEventListener("click", () => {
+        const localVideo = document.getElementById("localVideo");
+        const remoteVideo = document.getElementById("remoteVideo");
+
+        // Create a canvas that's twice the width of a single video
+        const canvas = document.createElement("canvas");
+        canvas.width = 960; // Fixed width for the combined image
+        canvas.height = 360; // Fixed height
+        const ctx = canvas.getContext("2d");
+
+        // Draw local video on the left
+        ctx.drawImage(
+          localVideo,
+          0,
+          0,
+          480, // Fixed width for each video
+          360 // Fixed height
+        );
+
+        // Draw remote video on the right
+        ctx.drawImage(
+          remoteVideo,
+          480, // Start at the middle of the canvas
+          0,
+          480, // Fixed width for each video
+          360 // Fixed height
+        );
+
+        const photoData = canvas.toDataURL("image/jpeg", 0.95); // Higher quality
+        photos.push(photoData);
+
+        // Show preview of the captured photo
+        preview.src = photoData;
+        preview.style.display = "block";
+        downloadBtn.style.display = "block";
+
+        // Update photo count display
+        const photoCountElement = document.getElementById("photoCount");
+        photoCountElement.textContent = photos.length;
+
+        // Update capture button text
+        captureBtn.textContent = `📸 Take Photo (${photos.length}/4)`;
+
+        // Emit photo taken event
+        socket.emit("photo-taken", { roomId, photoData });
+
+        if (photos.length === 4) {
+          captureBtn.disabled = true;
+          captureBtn.textContent = "✨ All Photos Taken!";
+
+          // Store photos in localStorage for editor page
+          localStorage.setItem("photoboothPhotos", JSON.stringify(photos));
+
+          // Redirect to editor page after a short delay
+          setTimeout(() => {
+            window.location.href = "editor.html";
+          }, 1500);
+        }
+      });
+
+      // Handle photo saving
+      socket.on("photo-saved", (data) => {
+        console.log("Photo saved:", data);
+      });
+
+      // Handle errors
+      socket.on("error", (message) => {
+        alert(message);
+      });
+    </script>
+  </body>
+</html>
