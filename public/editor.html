@@ -372,13 +372,37 @@
           font-weight: bold;
         "
       >
-        Change the colors, add a filter, write a message to make it feel
-        personal to you. No matter how it turns out, it's yours. So keep it,
-        because every memory matters.
+        Change the colors 🎨, add a filter ✨, write a message ✍️ to make it
+        feel personal to you. No matter how it turns out, it's yours. 💖 So keep
+        it, because every memory matters 💫
+      </p>
+      <p
+        style="
+          text-align: center;
+          font-size: 15px;
+          color: #555;
+          margin-top: 10px;
+          font-weight: bold;
+        "
+      >
+        📸 The photos clicked are not saved on our server and remain only in the
+        local memory of your device. We do not store, share, or access your
+        images in any way 🔒
       </p>
       <button class="download-strip" id="downloadButton">
         💝 Download Strip
       </button>
+      <p
+        style="
+          text-align: center;
+          font-size: 12px;
+          color: #555;
+          margin-top: 10px;
+          font-weight: bold;
+        "
+      >
+        Made with 💖, a little nostalgia, and a whole lot of heart.
+      </p>
     </div>
     <script>
       // Color options
@@ -492,7 +516,8 @@
               tempCanvas.width = img.width;
               tempCanvas.height = img.height;
 
-              // Mirror the left half of the image
+              // Mirror both halves of the image
+              // Left half
               tempCtx.save();
               tempCtx.translate(img.width / 2, 0);
               tempCtx.scale(-1, 1);
@@ -509,18 +534,22 @@
               );
               tempCtx.restore();
 
-              // Draw the right half unmirrored
+              // Right half (also mirrored)
+              tempCtx.save();
+              tempCtx.translate(img.width, 0);
+              tempCtx.scale(-1, 1);
               tempCtx.drawImage(
                 img,
                 img.width / 2,
                 0,
                 img.width / 2,
                 img.height,
-                img.width / 2,
+                0,
                 0,
                 img.width / 2,
                 img.height
               );
+              tempCtx.restore();
 
               // Set the mirrored image as background
               slots[
@@ -615,7 +644,8 @@
               const x = horizontalPadding;
               const y = topPadding + index * (slotHeight + photoPadding);
 
-              // Draw the left side (local video) mirrored
+              // Draw both sides mirrored
+              // Left side
               ctx.save();
               ctx.translate(x + imageWidth / 2, y);
               ctx.scale(-1, 1);
@@ -632,18 +662,22 @@
               );
               ctx.restore();
 
-              // Draw the right side (remote video) unmirrored
+              // Right side (also mirrored)
+              ctx.save();
+              ctx.translate(x + imageWidth, y);
+              ctx.scale(-1, 1);
               ctx.drawImage(
                 img,
                 imageWidth / 2,
                 0,
                 imageWidth / 2,
                 slotHeight,
-                x + imageWidth / 2,
-                y,
+                0,
+                0,
                 imageWidth / 2,
                 slotHeight
               );
+              ctx.restore();
 
               // Apply filter if selected
               if (currentFilter !== "none") {

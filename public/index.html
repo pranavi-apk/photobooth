@@ -9,6 +9,67 @@
       rel="stylesheet"
     />
     <style>
+      /* Curtain Animation */
+      .curtain-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+        pointer-events: none;
+      }
+
+      .curtain {
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          var(--primary-pink) 0%,
+          var(--secondary-pink) 50%,
+          var(--light-pink) 100%
+        );
+        transition: transform 2s ease-in-out;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .curtain::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.1) 0px,
+          rgba(255, 255, 255, 0.1) 20px,
+          rgba(255, 255, 255, 0.2) 20px,
+          rgba(255, 255, 255, 0.2) 40px
+        );
+      }
+
+      .curtain.left {
+        left: 0;
+        transform-origin: left;
+        transform: scaleX(1);
+      }
+
+      .curtain.right {
+        right: 0;
+        transform-origin: right;
+        transform: scaleX(1);
+      }
+
+      .curtain.open.left {
+        transform: scaleX(0);
+      }
+
+      .curtain.open.right {
+        transform: scaleX(0);
+      }
+
       :root {
         --primary-pink: #e8b4b8;
         --secondary-pink: #eed6d3;
@@ -308,6 +369,11 @@
     </style>
   </head>
   <body>
+    <!-- Curtain Animation -->
+    <div class="curtain-container">
+      <div class="curtain left"></div>
+      <div class="curtain right"></div>
+    </div>
     <div class="container">
       <div class="corner corner-tl"></div>
       <div class="corner corner-tr"></div>
@@ -322,8 +388,21 @@
           placeholder="Enter a unique room name..."
         />
         <div class="btn-group">
-          <button id="createRoomBtn">Create Room</button>
-          <button id="joinRoomBtn">Join Room</button>
+          <button id="createRoomBtn">Create Room 📸</button>
+          <button id="joinRoomBtn">Join Room 😍</button>
+        </div>
+        <div
+          class="copyright"
+          style="
+            text-align: center;
+            margin-top: 20px;
+            font-family: 'Playfair Display', serif;
+            color: var(--vintage-brown);
+            font-size: 10px;
+            opacity: 0.8;
+          "
+        >
+          PS: Wish You Were Here by Pranavi © 2025
         </div>
       </div>
       <div id="room" style="display: none">
@@ -353,6 +432,19 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      // Curtain Animation
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelector(".curtain.left").classList.add("open");
+          document.querySelector(".curtain.right").classList.add("open");
+
+          // Remove curtains after animation
+          setTimeout(() => {
+            document.querySelector(".curtain-container").style.display = "none";
+          }, 2000);
+        }, 500);
+      });
+
       // WebRTC configuration
       const configuration = {
         iceServers: [
@@ -414,6 +506,25 @@
         captureBtn.disabled = photos.length >= 4;
       }
 
+      // Handle room unavailable event
+      socket.on("room-unavailable", (message) => {
+        alert(message);
+        // Reset camera if we had initialized it
+        if (localStream) {
+          localStream.getTracks().forEach((track) => track.stop());
+          localStream = null;
+        }
+      });
+
+      // Handle successful room join
+      socket.on("room-joined", (userId) => {
+        console.log("Successfully joined room with ID:", userId);
+        roomSetup.style.display = "none";
+        document.getElementById("room").style.display = "block";
+        document.getElementById("roomName").textContent = roomId;
+        captureBtn.disabled = false;
+      });
+
       // Create room
       createRoomBtn.addEventListener("click", async () => {
         roomId = roomIdInput.value.trim();
@@ -424,15 +535,10 @@
         console.log("Creating room:", roomId);
         try {
           await initializeWebRTC();
-          socket.emit("join-room", roomId);
-          console.log("Joined room:", roomId);
-          roomSetup.style.display = "none";
-          document.getElementById("room").style.display = "block";
-          document.getElementById("roomName").textContent = roomId;
-          captureBtn.disabled = false;
+          socket.emit("join-room", roomId, true);
         } catch (error) {
           console.error("Error creating room:", error);
-          alert("Error creating room. Please try again.");
+          alert("Error accessing camera. Please try again.");
         }
       });
 
@@ -446,15 +552,10 @@
         console.log("Joining room:", roomId);
         try {
           await initializeWebRTC();
-          socket.emit("join-room", roomId);
-          console.log("Joined room:", roomId);
-          roomSetup.style.display = "none";
-          document.getElementById("room").style.display = "block";
-          document.getElementById("roomName").textContent = roomId;
-          captureBtn.disabled = false;
+          socket.emit("join-room", roomId, false);
         } catch (error) {
           console.error("Error joining room:", error);
-          alert("Error joining room. Please try again.");
+          alert("Error accessing camera. Please try again.");
         }
       });
 
@@ -493,6 +594,13 @@
       // Create peer connection
       function createPeerConnection() {
         try {
+          console.log(
+            "Creating peer connection with configuration:",
+            configuration
+          );
+          if (!configuration) {
+            throw new Error("WebRTC configuration is not defined");
+          }
           if (peerConnection) {
             peerConnection.close();
           }
@@ -534,7 +642,10 @@
 
           // Create and send offer
           peerConnection
-            .createOffer()
+            .createOffer({
+              offerToReceiveVideo: true,
+              offerToReceiveAudio: false,
+            })
             .then((offer) => {
               console.log("Created offer:", offer.type);
               return peerConnection.setLocalDescription(offer);
@@ -545,6 +656,17 @@
             })
             .catch((error) => {
               console.error("Error creating offer:", error);
+              // Log more details about the error
+              console.log(
+                "PeerConnection state:",
+                peerConnection.connectionState
+              );
+              console.log(
+                "ICE connection state:",
+                peerConnection.iceConnectionState
+              );
+              console.log("Signaling state:", peerConnection.signalingState);
+
               // If there's an error, try to recover by creating a new connection
               setTimeout(() => {
                 createPeerConnection();

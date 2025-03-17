@@ -22,12 +22,25 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
-        fontSrc: ["'self'", "fonts.gstatic.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", "wss:", "https:"],
+        connectSrc: [
+          "'self'",
+          "wss://localhost:*",
+          "https://localhost:*",
+          "http://localhost:*",
+        ],
+        mediaSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: [],
       },
     },
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    crossOriginResourcePolicy: { policy: "same-origin" },
   })
 );
 
@@ -75,6 +88,19 @@ const webRTCConfig = {
 // Store active rooms and their participants
 const rooms = new Map();
 
+// Cleanup inactive rooms
+const cleanupInactiveRooms = () => {
+  rooms.forEach((room, roomId) => {
+    if (room.participants.size === 0) {
+      rooms.delete(roomId);
+      console.log(`Cleaned up inactive room: ${roomId}`);
+    }
+  });
+};
+
+// Run room cleanup every 5 minutes
+setInterval(cleanupInactiveRooms, 5 * 60 * 1000);
+
 // Cleanup function for photos
 const cleanupPhotos = () => {
   const photosDir = path.join(__dirname, "public", "photos");
@@ -101,21 +127,57 @@ setInterval(cleanupPhotos, process.env.PHOTO_CLEANUP_INTERVAL);
 io.on("connection", (socket) => {
   console.log("A user connected");
 
-  socket.on("join-room", (roomId) => {
-    socket.join(roomId);
+  socket.on("join-room", (roomId, isCreate = false) => {
+    // Check if room exists
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, new Set());
+      if (!isCreate) {
+        socket.emit(
+          "room-unavailable",
+          "This room doesn't exist. Please create a new room or check the room ID."
+        );
+        return;
+      }
+      // Create new room
+      rooms.set(roomId, {
+        participants: new Set(),
+        isOriginalRoom: true,
+      });
+      socket.join(roomId);
+      rooms.get(roomId).participants.add(socket.id);
+      socket.emit("room-joined", socket.id);
+    } else if (
+      rooms.get(roomId).participants.size < 2 &&
+      rooms.get(roomId).isOriginalRoom
+    ) {
+      if (isCreate) {
+        // Someone's trying to create a room that already exists
+        socket.emit(
+          "room-unavailable",
+          "This room ID is already in use. Please try a different room ID."
+        );
+        return;
+      }
+      // Join existing room if it's the original and not full
+      socket.join(roomId);
+      rooms.get(roomId).participants.add(socket.id);
+      socket.emit("room-joined", socket.id);
+      socket.to(roomId).emit("user-connected", socket.id);
+    } else {
+      // Room is either full or someone's trying to create a duplicate
+      socket.emit(
+        "room-unavailable",
+        "This room is full. Please try a different room ID."
+      );
+      return;
     }
-    rooms.get(roomId).add(socket.id);
-    socket.to(roomId).emit("user-connected", socket.id);
   });
 
   socket.on("disconnect", () => {
     // Clean up rooms
-    rooms.forEach((participants, roomId) => {
-      if (participants.has(socket.id)) {
-        participants.delete(socket.id);
-        if (participants.size === 0) {
+    rooms.forEach((room, roomId) => {
+      if (room.participants.has(socket.id)) {
+        room.participants.delete(socket.id);
+        if (room.participants.size === 0) {
           rooms.delete(roomId);
         }
       }
@@ -123,15 +185,42 @@ io.on("connection", (socket) => {
   });
 
   socket.on("offer", (offer, roomId) => {
-    socket.to(roomId).emit("offer", offer);
+    try {
+      if (!rooms.has(roomId)) {
+        socket.emit("error", "Room not found");
+        return;
+      }
+      socket.to(roomId).emit("offer", offer);
+    } catch (error) {
+      console.error("Error handling offer:", error);
+      socket.emit("error", "Failed to process offer");
+    }
   });
 
   socket.on("answer", (answer, roomId) => {
-    socket.to(roomId).emit("answer", answer);
+    try {
+      if (!rooms.has(roomId)) {
+        socket.emit("error", "Room not found");
+        return;
+      }
+      socket.to(roomId).emit("answer", answer);
+    } catch (error) {
+      console.error("Error handling answer:", error);
+      socket.emit("error", "Failed to process answer");
+    }
   });
 
   socket.on("ice-candidate", (candidate, roomId) => {
-    socket.to(roomId).emit("ice-candidate", candidate);
+    try {
+      if (!rooms.has(roomId)) {
+        socket.emit("error", "Room not found");
+        return;
+      }
+      socket.to(roomId).emit("ice-candidate", candidate);
+    } catch (error) {
+      console.error("Error handling ICE candidate:", error);
+      socket.emit("error", "Failed to process ICE candidate");
+    }
   });
 
   socket.on("photo-taken", (data) => {
